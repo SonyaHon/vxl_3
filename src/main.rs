@@ -3,6 +3,7 @@ extern crate glutin;
 extern crate rand;
 extern crate specs;
 
+use cgmath::vec3;
 use glutin::{
     dpi::LogicalSize, dpi::Size, event::Event, event::WindowEvent, event_loop::ControlFlow,
     event_loop::EventLoop, window::WindowBuilder, ContextBuilder,
@@ -23,7 +24,8 @@ fn main() {
 
     let windowed_context = unsafe { windowed_context.make_current().unwrap() };
 
-    let gl = vxl_gl::load(&windowed_context.context());
+    let mut gl = vxl_gl::load(&windowed_context.context());
+    gl.clear_color = vec3(0.1, 0.1, 0.1);
 
     println!(
         "Pixel format of context is {:?}",
