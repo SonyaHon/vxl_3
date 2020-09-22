@@ -16,7 +16,7 @@ mod resource;
 mod system;
 mod vxl_gl;
 
-use component::mesh::Mesh;
+use component::{mesh::Mesh, transform::Transform};
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -56,6 +56,7 @@ fn main() {
             ],
             vec![0, 1, 2],
         ))
+        .with(Transform::default())
         .build();
 
     let mut dispatcher = dispatcher_builder.build();

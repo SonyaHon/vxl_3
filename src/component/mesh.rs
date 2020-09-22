@@ -1,6 +1,7 @@
 use crate::vxl_gl::{gl, Gl};
 use specs::prelude::*;
 
+/// Component that creates and holds vao and vbos of the mesh
 pub struct Mesh {
     vao_id: gl::types::GLuint,
     vbo_ids: Vec<gl::types::GLuint>,
