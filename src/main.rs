@@ -3,20 +3,22 @@ extern crate glutin;
 extern crate rand;
 extern crate specs;
 
+mod component;
+mod loader;
+mod render_functions;
+mod resource;
+mod system;
+mod utils;
+mod vxl_gl;
+
 use cgmath::vec3;
 use glutin::{
     dpi::LogicalSize, dpi::Size, event::Event, event::WindowEvent, event_loop::ControlFlow,
     event_loop::EventLoop, window::WindowBuilder, ContextBuilder,
 };
 use specs::prelude::*;
-use system::TestSystem;
 
-mod component;
-mod resource;
-mod system;
-mod vxl_gl;
-
-use component::{mesh::Mesh, transform::Transform};
+use component::{material::Material, mesh::Mesh, transform::Transform};
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -42,8 +44,10 @@ fn main() {
     let mut world = specs::World::new();
 
     world.register::<Mesh>();
+    world.register::<Material>();
+    world.register::<Transform>();
 
-    let dispatcher_builder = specs::DispatcherBuilder::new().with(TestSystem, "test_sys", &[]);
+    let dispatcher_builder = specs::DispatcherBuilder::new();
 
     world
         .create_entity()
@@ -57,6 +61,7 @@ fn main() {
             vec![0, 1, 2],
         ))
         .with(Transform::default())
+        .with(Material::default())
         .build();
 
     let mut dispatcher = dispatcher_builder.build();
@@ -79,6 +84,12 @@ fn main() {
 
         dispatcher.dispatch(&world);
         world.maintain();
+
+        let (material, mesh): (ReadStorage<Material>, ReadStorage<Mesh>) = world.system_data();
+
+        for (_material, mesh) in (&material, &mesh).join() {
+            println!("Mesh VAO id is: {}", mesh.get_vao_id());
+        }
 
         windowed_context.swap_buffers().unwrap();
     });

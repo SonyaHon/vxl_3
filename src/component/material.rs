@@ -1,6 +1,11 @@
 use specs::prelude::*;
 
-pub struct Material {}
+use crate::vxl_gl::gl;
+
+pub struct Material {
+    shader_program_id: gl::types::GLuint,
+    shaders_ids: gl::types::GLuint,
+}
 impl Component for Material {
     type Storage = DenseVecStorage<Self>;
 }
