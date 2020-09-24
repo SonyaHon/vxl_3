@@ -21,9 +21,13 @@ use resource::{DeltaTime, Task};
 use specs::prelude::*;
 
 use component::{
-    camera::Camera, camera::MainCamera, material::Material, mesh::Mesh, transform::Transform,
+    camera::Camera, camera::MainCamera, material::Material, mesh::Mesh, player::Player,
+    transform::Transform,
 };
-use system::{SetMainCameraSys, SetRenderTaskSys};
+use system::{
+    demo::DemoPlayerRotationSys,
+    tasks::{SetMainCameraSys, SetRenderTaskSys},
+};
 use vxl_gl::gl;
 
 const RFPS: f32 = 120.0;
@@ -65,11 +69,16 @@ fn main() {
         )
         .finish();
 
+    let texture_manager = loader::textures::TextureLoader::new(&gl)
+        .add_texture("test.png", "test")
+        .finish();
+
     world.register::<Mesh>();
     world.register::<Material>();
     world.register::<Transform>();
     world.register::<Camera>();
     world.register::<MainCamera>();
+    world.register::<Player>();
 
     let dispatcher_builder = specs::DispatcherBuilder::new();
 
@@ -78,14 +87,16 @@ fn main() {
         .with(Mesh::from_data(
             &gl,
             vec![
-                cgmath::vec3(0.0, 0.5, 0.0),
+                cgmath::vec3(-0.5, 0.5, 0.0),
+                cgmath::vec3(0.5, 0.5, 0.0),
                 cgmath::vec3(-0.5, -0.5, 0.0),
                 cgmath::vec3(0.5, -0.5, 0.0),
             ],
-            vec![0, 1, 2],
+            vec![0, 2, 1, 1, 2, 3],
         ))
         .with(Transform::default())
         .with(Material::default(&shader_manager))
+        .with(Player)
         .build();
 
     world
@@ -103,6 +114,7 @@ fn main() {
     let mut dispatcher = dispatcher_builder
         .with(SetMainCameraSys, "main_camera", &[])
         .with(SetRenderTaskSys, "render_task", &[])
+        .with(DemoPlayerRotationSys, "demo_player_rotation", &[])
         .build();
     dispatcher.setup(&mut world);
 

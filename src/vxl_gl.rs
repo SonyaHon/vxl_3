@@ -280,6 +280,48 @@ impl Gl {
 }
 
 impl Gl {
+    pub fn create_texture(&self) -> gl::types::GLuint {
+        let mut tex_id: gl::types::GLuint = 0;
+        unsafe { self.gl.GenTextures(1, &mut tex_id) };
+        tex_id
+    }
+
+    pub fn bind_texture(&self, texture_id: gl::types::GLuint) {
+        unsafe {
+            self.gl.BindTexture(gl::TEXTURE_2D, texture_id);
+        }
+    }
+
+    pub fn unbind_texture(&self) {
+        unsafe {
+            self.gl.BindTexture(gl::TEXTURE_2D, 0);
+        }
+    }
+
+    pub fn generate_mipmap(&self) {
+        unsafe {
+            self.gl.GenerateMipmap(gl::TEXTURE_2D);
+        }
+    }
+
+    pub fn set_texture_data(&self, dimensions: cgmath::Vector2<u32>, texture_data: Vec<u8>) {
+        unsafe {
+            self.gl.TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA as i32,
+                dimensions.x as i32,
+                dimensions.y as i32,
+                0,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+                &texture_data[0] as *const u8 as *const std::ffi::c_void,
+            )
+        }
+    }
+}
+
+impl Gl {
     pub fn print_error(&self) {
         unsafe {
             let errno = self.gl.GetError();

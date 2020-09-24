@@ -8,6 +8,14 @@ use walkdir::WalkDir;
 
 fn main() {
     let dest = PathBuf::from(&env::var("OUT_DIR").unwrap());
+    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+
+    let executable_path = locate_target_dir_from_output_dir(&dest)
+        .expect("failed to find target dir")
+        .join(env::var("PROFILE").unwrap());
+
+    std::fs::remove_dir_all(&executable_path.join("res/")).unwrap();
+    copy(&manifest_dir.join("res/"), &executable_path.join("res/"));
 
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -15,17 +23,6 @@ fn main() {
     Registry::new(Api::Gles2, (3, 3), Profile::Core, Fallbacks::All, [])
         .write_bindings(gl_generator::StructGenerator, &mut file)
         .unwrap();
-
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-
-    // locate executable path even if the project is in workspace
-
-    let executable_path = locate_target_dir_from_output_dir(&dest)
-        .expect("failed to find target dir")
-        .join(env::var("PROFILE").unwrap());
-
-    std::fs::remove_dir_all(&executable_path.join("res")).unwrap();
-    copy(&manifest_dir.join("res"), &executable_path.join("res"));
 }
 
 fn locate_target_dir_from_output_dir(mut target_dir_search: &Path) -> Option<&Path> {

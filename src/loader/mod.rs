@@ -6,6 +6,7 @@ use std::{
 };
 
 pub mod shaders;
+pub mod textures;
 
 #[derive(Debug)]
 pub enum Error {
