@@ -17,13 +17,13 @@ use glutin::{
     dpi::LogicalSize, dpi::Size, event::Event, event::WindowEvent, event_loop::ControlFlow,
     event_loop::EventLoop, window::WindowBuilder, ContextBuilder,
 };
-use resource::DeltaTime;
+use resource::{DeltaTime, Task};
 use specs::prelude::*;
 
 use component::{
     camera::Camera, camera::MainCamera, material::Material, mesh::Mesh, transform::Transform,
 };
-use system::TestSys;
+use system::{SetMainCameraSys, SetRenderTaskSys};
 use vxl_gl::gl;
 
 const RFPS: f32 = 120.0;
@@ -100,7 +100,10 @@ fn main() {
         .with(MainCamera)
         .build();
 
-    let mut dispatcher = dispatcher_builder.with(TestSys, "test", &[]).build();
+    let mut dispatcher = dispatcher_builder
+        .with(SetMainCameraSys, "main_camera", &[])
+        .with(SetRenderTaskSys, "render_task", &[])
+        .build();
     dispatcher.setup(&mut world);
 
     let rfps_barrier = 1000000.0 / RFPS;
@@ -114,6 +117,7 @@ fn main() {
         *control_flow = ControlFlow::Poll;
         let timer_start = std::time::Instant::now();
         world.insert(DeltaTime::new(diff_timer.as_micros() as u32));
+        world.insert(Task::default());
 
         match event {
             Event::LoopDestroyed => return,
@@ -131,40 +135,32 @@ fn main() {
         if (timer.as_micros() as f32) >= rfps_barrier {
             gl.clear_screen();
 
-            let (main_camera, camera, transform): (
-                ReadStorage<MainCamera>,
-                ReadStorage<Camera>,
-                ReadStorage<Transform>,
-            ) = world.system_data();
+            let task_res = world.read_resource::<Task>();
+            let main_cam = task_res.get_main_camera_task();
 
-            let (_, camera, transform) = (&main_camera, &camera, &transform).join().next().unwrap();
+            let projection_mat = main_cam.get_projection_mat();
+            let view_mat = main_cam.get_view_mat();
 
-            let projection_mat = camera.get_projection_matrix();
-            let view_mat = transform.get_view_matrix();
+            let render_tasks = task_res.get_render_tasks();
+            for render_task in render_tasks {
+                let pid = render_task.get_pid();
+                let attrib_arrays = render_task.get_attri_arrays();
 
-            let (material, transform, mesh): (
-                ReadStorage<Material>,
-                ReadStorage<Transform>,
-                ReadStorage<Mesh>,
-            ) = world.system_data();
-
-            for (material, transform, mesh) in (&material, &transform, &mesh).join() {
-                let pid = material.get_program_id();
                 gl.bind_program(pid);
-                let tloc = gl.get_uniform_location(pid, "trans_mat");
-                let ploc = gl.get_uniform_location(pid, "proj_mat");
-                let vloc = gl.get_uniform_location(pid, "view_mat");
 
-                gl.add_uniform_matrix4f(tloc, transform.get_transform_matrix());
+                let ploc = gl.get_uniform_location(pid, "proj_mat");
                 gl.add_uniform_matrix4f(ploc, projection_mat);
+                let vloc = gl.get_uniform_location(pid, "view_mat");
                 gl.add_uniform_matrix4f(vloc, view_mat);
 
-                gl.bind_vao(mesh.get_vao_id());
-                gl.enable_vertex_attrib_arrays(vec![0]); // @todo gather this from mesh or material
+                for (name, value) in render_task.get_mat4f_unifroms() {
+                    gl.add_uniform_matrix4f(gl.get_uniform_location(pid, *name), *value);
+                }
 
-                gl.draw_elements(mesh.get_vertex_count());
-
-                gl.disable_vertex_attrib_arrays(vec![0]);
+                gl.bind_vao(render_task.get_vao_id());
+                gl.enable_vertex_attrib_arrays(attrib_arrays);
+                gl.draw_elements(render_task.get_vertex_count());
+                gl.disable_vertex_attrib_arrays(attrib_arrays);
                 gl.unbind_vao();
                 gl.unbind_program();
             }

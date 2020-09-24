@@ -68,7 +68,7 @@ impl Gl {
         }
     }
 
-    pub fn enable_vertex_attrib_arrays(&self, attribs: Vec<gl::types::GLuint>) {
+    pub fn enable_vertex_attrib_arrays(&self, attribs: &Vec<gl::types::GLuint>) {
         unsafe {
             attribs.iter().for_each(|attrib| {
                 let index = *attrib;
@@ -77,7 +77,7 @@ impl Gl {
         }
     }
 
-    pub fn disable_vertex_attrib_arrays(&self, attribs: Vec<gl::types::GLuint>) {
+    pub fn disable_vertex_attrib_arrays(&self, attribs: &Vec<gl::types::GLuint>) {
         unsafe {
             attribs
                 .iter()
