@@ -1,6 +1,7 @@
 use std::ffi::{CStr, CString};
 
 use crate::utils::create_whitespace_csting_with_len;
+use cgmath::prelude::*;
 use cgmath::{vec3, Vector3};
 use glutin::{self, PossiblyCurrent};
 
@@ -55,26 +56,44 @@ impl Gl {
         vao
     }
 
-    fn unbind_vao(&self) {
+    pub fn unbind_vao(&self) {
         unsafe {
             self.gl.BindVertexArray(0);
+        }
+    }
+
+    pub fn bind_vao(&self, vao_id: gl::types::GLuint) {
+        unsafe {
+            self.gl.BindVertexArray(vao_id);
+        }
+    }
+
+    pub fn enable_vertex_attrib_arrays(&self, attribs: Vec<gl::types::GLuint>) {
+        unsafe {
+            attribs.iter().for_each(|attrib| {
+                let index = *attrib;
+                self.gl.EnableVertexAttribArray(index);
+            });
+        }
+    }
+
+    pub fn disable_vertex_attrib_arrays(&self, attribs: Vec<gl::types::GLuint>) {
+        unsafe {
+            attribs
+                .iter()
+                .for_each(|attrib| self.gl.DisableVertexAttribArray(*attrib));
         }
     }
 }
 
 /// VBOs
 impl Gl {
-    pub fn create_vertex_vbo(
-        &self,
-        vao_id: gl::types::GLuint,
-        vertices: Vec<cgmath::Vector3<f32>>,
-    ) -> gl::types::GLuint {
+    pub fn create_vertex_vbo(&self, vertices: Vec<cgmath::Vector3<f32>>) -> gl::types::GLuint {
         let mut vbo: gl::types::GLuint = 0;
         unsafe { self.gl.GenBuffers(1, &mut vbo) };
         unsafe {
-            self.gl.BindVertexArray(vao_id);
             self.gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
-            let mut nverts = Vec::new();
+            let mut nverts: Vec<f32> = Vec::new();
             vertices.iter().for_each(|vertex| {
                 nverts.push(vertex.x);
                 nverts.push(vertex.y);
@@ -95,24 +114,17 @@ impl Gl {
                 (3 * std::mem::size_of::<f32>()) as gl::types::GLint,
                 std::ptr::null(),
             );
+            self.gl.DisableVertexAttribArray(0);
             self.gl.BindBuffer(gl::ARRAY_BUFFER, 0);
         };
-
-        self.unbind_vao();
 
         vbo
     }
 
-    pub fn create_index_vbo(
-        &self,
-        vao_id: gl::types::GLuint,
-        indices: Vec<i32>,
-    ) -> gl::types::GLuint {
+    pub fn create_index_vbo(&self, indices: Vec<u32>) -> gl::types::GLuint {
         let mut vbo: gl::types::GLuint = 0;
         unsafe { self.gl.GenBuffers(1, &mut vbo) };
         unsafe {
-            self.gl.BindVertexArray(vao_id);
-            self.gl.GenBuffers(1, &mut vbo);
             self.gl.BindBuffer(gl::ELEMENT_ARRAY_BUFFER, vbo);
             self.gl.BufferData(
                 gl::ELEMENT_ARRAY_BUFFER,
@@ -120,9 +132,8 @@ impl Gl {
                 indices.as_ptr() as *const gl::types::GLvoid,
                 gl::STATIC_DRAW,
             );
-            self.gl.BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
+            // self.gl.BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
         };
-        self.unbind_vao();
 
         vbo
     }
@@ -165,6 +176,7 @@ impl Gl {
                 )
             };
 
+            println!("Error: {:?}", error);
             panic!(error);
         }
     }
@@ -225,7 +237,54 @@ impl Gl {
             self.gl.DeleteProgram(program_id);
         }
     }
+
+    pub fn bind_program(&self, program_id: gl::types::GLuint) {
+        unsafe {
+            self.gl.UseProgram(program_id);
+        }
+    }
+
+    pub fn unbind_program(&self) {
+        unsafe {
+            self.gl.UseProgram(0);
+        }
+    }
+
+    pub fn get_uniform_location(&self, program_id: gl::types::GLuint, location_name: &str) -> i32 {
+        unsafe {
+            self.gl
+                .GetUniformLocation(program_id, location_name.to_string().as_ptr() as *const i8)
+        }
+    }
+
+    pub fn add_uniform_matrix4f(&self, location: i32, matrix: cgmath::Matrix4<f32>) {
+        unsafe {
+            self.gl
+                .UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
+        }
+    }
 }
 
-unsafe impl Send for Gl {}
-unsafe impl Sync for Gl {}
+impl Gl {
+    pub fn draw_elements(&self, vertex_count: i32) {
+        unsafe {
+            self.gl.DrawElements(
+                gl::TRIANGLES,
+                vertex_count as gl::types::GLsizei,
+                gl::UNSIGNED_INT,
+                std::ptr::null(),
+            );
+        }
+    }
+}
+
+impl Gl {
+    pub fn print_error(&self) {
+        unsafe {
+            let errno = self.gl.GetError();
+            if errno != 0 {
+                println!("GL Error: {:?}", errno);
+            }
+        }
+    }
+}

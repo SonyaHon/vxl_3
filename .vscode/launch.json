@@ -7,8 +7,37 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug",
-      "program": "${workspaceFolder}/<your program>",
+      "name": "Debug executable 'vxl_3'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=vxl_3",
+          "--package=vxl_3"
+        ],
+        "filter": {
+          "name": "vxl_3",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'vxl_3'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=vxl_3",
+          "--package=vxl_3"
+        ],
+        "filter": {
+          "name": "vxl_3",
+          "kind": "bin"
+        }
+      },
       "args": [],
       "cwd": "${workspaceFolder}"
     }

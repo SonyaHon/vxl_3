@@ -4,7 +4,7 @@ use specs::prelude::*;
 /// Component that creates and holds vao and vbos of the mesh
 pub struct Mesh {
     vao_id: gl::types::GLuint,
-    vbo_ids: Vec<gl::types::GLuint>,
+    vertex_count: i32,
 }
 
 impl Component for Mesh {
@@ -12,14 +12,18 @@ impl Component for Mesh {
 }
 
 impl Mesh {
-    pub fn from_data(gl: &Gl, vertices: Vec<cgmath::Vector3<f32>>, indices: Vec<i32>) -> Mesh {
+    pub fn from_data(gl: &Gl, vertices: Vec<cgmath::Vector3<f32>>, indices: Vec<u32>) -> Mesh {
+        let vertex_count = indices.len() as i32;
         let vao_id: gl::types::GLuint = gl.create_vao();
-        let vbo_ids = vec![
-            gl.create_vertex_vbo(vao_id, vertices),
-            gl.create_index_vbo(vao_id, indices),
-        ];
+        gl.bind_vao(vao_id);
+        gl.create_index_vbo(indices);
+        gl.create_vertex_vbo(vertices);
+        gl.unbind_vao();
 
-        Mesh { vao_id, vbo_ids }
+        Mesh {
+            vao_id,
+            vertex_count,
+        }
     }
 }
 
@@ -28,7 +32,7 @@ impl Mesh {
         self.vao_id
     }
 
-    pub fn get_vbo_ids(&self) -> &Vec<gl::types::GLuint> {
-        &self.vbo_ids
+    pub fn get_vertex_count(&self) -> i32 {
+        self.vertex_count
     }
 }
