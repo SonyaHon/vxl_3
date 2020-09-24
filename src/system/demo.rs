@@ -14,7 +14,7 @@ impl<'a> System<'a> for DemoPlayerRotationSys {
     fn run(&mut self, (player, mut transfrom, delta): Self::SystemData) {
         let (_, transform) = (&player, &mut transfrom).join().next().unwrap();
 
-        const ROTATION_SPEED: f32 = 0.ear;
+        const ROTATION_SPEED: f32 = 0.8;
 
         transform.rotate_y(ROTATION_SPEED * delta.get_delta());
     }

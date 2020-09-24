@@ -5,6 +5,7 @@ use specs::prelude::*;
 pub struct Mesh {
     vao_id: gl::types::GLuint,
     vertex_count: i32,
+    attrib_arays: Vec<gl::types::GLuint>
 }
 
 impl Component for Mesh {
@@ -20,9 +21,12 @@ impl Mesh {
         gl.create_vertex_vbo(vertices);
         gl.unbind_vao();
 
+        let attrib_arays: Vec<gl::types::GLuint> = vec![0];
+
         Mesh {
             vao_id,
             vertex_count,
+            attrib_arays
         }
     }
 }
@@ -34,5 +38,9 @@ impl Mesh {
 
     pub fn get_vertex_count(&self) -> i32 {
         self.vertex_count
+    }
+
+    pub fn get_attrib_arrays(&self) -> &Vec<gl::types::GLuint> {
+       &self.attrib_arays 
     }
 }

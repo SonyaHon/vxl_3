@@ -82,18 +82,21 @@ fn main() {
 
     let dispatcher_builder = specs::DispatcherBuilder::new();
 
+    let mesh = Mesh::from_data(
+        &gl,
+        vec![
+            cgmath::vec3(-0.5, 0.5, 0.0),
+            cgmath::vec3(0.5, 0.5, 0.0),
+            cgmath::vec3(-0.5, -0.5, 0.0),
+            cgmath::vec3(0.5, -0.5, 0.0),
+        ],
+        vec![0, 2, 1, 1, 2, 3],
+    );
+
+
     world
         .create_entity()
-        .with(Mesh::from_data(
-            &gl,
-            vec![
-                cgmath::vec3(-0.5, 0.5, 0.0),
-                cgmath::vec3(0.5, 0.5, 0.0),
-                cgmath::vec3(-0.5, -0.5, 0.0),
-                cgmath::vec3(0.5, -0.5, 0.0),
-            ],
-            vec![0, 2, 1, 1, 2, 3],
-        ))
+        .with(mesh)
         .with(Transform::default())
         .with(Material::default(&shader_manager))
         .with(Player)

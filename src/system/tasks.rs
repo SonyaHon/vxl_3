@@ -36,7 +36,7 @@ impl<'a> System<'a> for SetRenderTaskSys {
             let program_id = material.get_program_id();
             let vao_id = mesh.get_vao_id();
             let vertex_count = mesh.get_vertex_count();
-            let attrib_arrays = vec![0];
+            let attrib_arrays = mesh.get_attrib_arrays().to_owned();
             let mat4f_uniforms = vec![("trans_mat", transform.get_transform_matrix())];
             task.push_render_task(RenderTask::new(
                 program_id,
