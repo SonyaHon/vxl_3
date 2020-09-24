@@ -1,13 +1,13 @@
 use specs::prelude::*;
 
-use crate::component::transform::Transform;
+use crate::{component::transform::Transform, resource::DeltaTime};
 pub struct TestSys;
 impl<'a> System<'a> for TestSys {
-    type SystemData = WriteStorage<'a, Transform>;
+    type SystemData = (ReadExpect<'a, DeltaTime>, WriteStorage<'a, Transform>);
 
-    fn run(&mut self, mut transform: Self::SystemData) {
+    fn run(&mut self, (delta, mut transform): Self::SystemData) {
         for transform in (&mut transform).join() {
-            transform.rotate_y(0.02);
+            transform.rotate_y(2.0 * delta.get_delta());
         }
     }
 }

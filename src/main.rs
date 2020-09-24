@@ -17,11 +17,14 @@ use glutin::{
     dpi::LogicalSize, dpi::Size, event::Event, event::WindowEvent, event_loop::ControlFlow,
     event_loop::EventLoop, window::WindowBuilder, ContextBuilder,
 };
+use resource::DeltaTime;
 use specs::prelude::*;
 
 use component::{material::Material, mesh::Mesh, transform::Transform};
 use system::TestSys;
 use vxl_gl::gl;
+
+const RFPS: f32 = 120.0;
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -82,8 +85,17 @@ fn main() {
     let mut dispatcher = dispatcher_builder.with(TestSys, "test", &[]).build();
     dispatcher.setup(&mut world);
 
+    let rfps_barrier = 1000000.0 / RFPS;
+    let mut timer = std::time::Duration::new(0, 0);
+    let mut diff_timer = std::time::Duration::new(0, 0);
+    let mut second_timer = std::time::Duration::new(0, 0);
+
+    let mut rfps = 0;
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
+        let timer_start = std::time::Instant::now();
+        world.insert(DeltaTime::new(diff_timer.as_micros() as u32));
 
         match event {
             Event::LoopDestroyed => return,
@@ -95,39 +107,51 @@ fn main() {
             _ => (),
         };
 
-        gl.clear_screen();
-
         dispatcher.dispatch(&world);
+        world.maintain();
+        if (timer.as_micros() as f32) >= rfps_barrier {
+            gl.clear_screen();
 
-        let (material, transform, mesh): (
-            ReadStorage<Material>,
-            ReadStorage<Transform>,
-            ReadStorage<Mesh>,
-        ) = world.system_data();
-        for (material, transform, mesh) in (&material, &transform, &mesh).join() {
-            let pid = material.get_program_id();
-            gl.bind_program(pid);
-            let tloc = gl.get_uniform_location(pid, "trans_mat");
-            // let trans_mat = transform.get_transform_matrix();
-            gl.add_uniform_matrix4f(tloc, transform.get_transform_matrix());
+            let (material, transform, mesh): (
+                ReadStorage<Material>,
+                ReadStorage<Transform>,
+                ReadStorage<Mesh>,
+            ) = world.system_data();
+            for (material, transform, mesh) in (&material, &transform, &mesh).join() {
+                let pid = material.get_program_id();
+                gl.bind_program(pid);
+                let tloc = gl.get_uniform_location(pid, "trans_mat");
+                // let trans_mat = transform.get_transform_matrix();
+                gl.add_uniform_matrix4f(tloc, transform.get_transform_matrix());
 
-            gl.bind_vao(mesh.get_vao_id());
-            gl.enable_vertex_attrib_arrays(vec![0]); // @todo gather this from mesh or material
+                gl.bind_vao(mesh.get_vao_id());
+                gl.enable_vertex_attrib_arrays(vec![0]); // @todo gather this from mesh or material
 
-            gl.draw_elements(mesh.get_vertex_count());
+                gl.draw_elements(mesh.get_vertex_count());
 
-            gl.disable_vertex_attrib_arrays(vec![0]);
-            gl.unbind_vao();
-            gl.unbind_program();
+                gl.disable_vertex_attrib_arrays(vec![0]);
+                gl.unbind_vao();
+                gl.unbind_program();
+            }
+
+            windowed_context.swap_buffers().unwrap();
+
+            gl.print_error();
+            timer = std::time::Duration::new(0, 0);
+            rfps += 1;
         }
 
-        drop(material);
-        drop(transform);
-        drop(mesh);
+        let elapsed = timer_start.elapsed();
+        if (timer.as_micros() as f32) < rfps_barrier {
+            timer = timer.checked_add(elapsed).unwrap();
+        }
+        diff_timer = elapsed;
+        second_timer = second_timer.checked_add(elapsed).unwrap();
 
-        world.maintain();
-        windowed_context.swap_buffers().unwrap();
-
-        gl.print_error();
+        if second_timer.as_secs() >= 1 {
+            println!("RFPS: {}", rfps);
+            rfps = 0;
+            second_timer = std::time::Duration::new(0, 0);
+        }
     });
 }
