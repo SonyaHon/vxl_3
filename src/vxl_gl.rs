@@ -132,7 +132,6 @@ impl Gl {
                 indices.as_ptr() as *const gl::types::GLvoid,
                 gl::STATIC_DRAW,
             );
-            // self.gl.BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
         };
 
         vbo
