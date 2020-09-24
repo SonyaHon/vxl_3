@@ -11,8 +11,7 @@ impl<'a> System<'a> for TestSys {
 
     fn run(&mut self, (delta, main_camera, mut transform): Self::SystemData) {
         for (_, transform) in (&main_camera, &mut transform).join() {
-            // transform.rotate_y(2.0 * delta.get_delta());
-            transform.translate_z(1.0 * delta.get_delta());
+            transform.translate_z(0.02 * delta.get_delta());
         }
     }
 }

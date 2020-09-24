@@ -93,7 +93,7 @@ fn main() {
         .with(Transform::from_position(cgmath::vec3(0.0, 0.0, 2.0)))
         .with(Camera::new(
             45.0,
-            WINDOW_HEIGHT / WINDOW_WIDTH,
+            WINDOW_WIDTH / WINDOW_HEIGHT,
             0.01,
             1000.0,
         ))
@@ -127,6 +127,7 @@ fn main() {
 
         dispatcher.dispatch(&world);
         world.maintain();
+
         if (timer.as_micros() as f32) >= rfps_barrier {
             gl.clear_screen();
 

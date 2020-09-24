@@ -251,8 +251,10 @@ impl Gl {
 
     pub fn get_uniform_location(&self, program_id: gl::types::GLuint, location_name: &str) -> i32 {
         unsafe {
-            self.gl
-                .GetUniformLocation(program_id, location_name.to_string().as_ptr() as *const i8)
+            self.gl.GetUniformLocation(
+                program_id,
+                location_name.to_owned().to_string().as_ptr() as *const i8,
+            )
         }
     }
 
