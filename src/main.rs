@@ -20,18 +20,22 @@ use glutin::{
 use resource::DeltaTime;
 use specs::prelude::*;
 
-use component::{material::Material, mesh::Mesh, transform::Transform};
+use component::{
+    camera::Camera, camera::MainCamera, material::Material, mesh::Mesh, transform::Transform,
+};
 use system::TestSys;
 use vxl_gl::gl;
 
 const RFPS: f32 = 120.0;
+const WINDOW_HEIGHT: f32 = 720.0;
+const WINDOW_WIDTH: f32 = 1280.0;
 
 fn main() {
     let event_loop = EventLoop::new();
     let window_builder = WindowBuilder::new()
         .with_title("VXL")
         .with_resizable(false)
-        .with_inner_size(Size::new(LogicalSize::new(1280, 720)));
+        .with_inner_size(Size::new(LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT)));
 
     let windowed_context = ContextBuilder::new()
         .with_gl_profile(glutin::GlProfile::Core)
@@ -64,6 +68,8 @@ fn main() {
     world.register::<Mesh>();
     world.register::<Material>();
     world.register::<Transform>();
+    world.register::<Camera>();
+    world.register::<MainCamera>();
 
     let dispatcher_builder = specs::DispatcherBuilder::new();
 
@@ -80,6 +86,18 @@ fn main() {
         ))
         .with(Transform::default())
         .with(Material::default(&shader_manager))
+        .build();
+
+    world
+        .create_entity()
+        .with(Transform::from_position(cgmath::vec3(0.0, 0.0, 2.0)))
+        .with(Camera::new(
+            45.0,
+            WINDOW_HEIGHT / WINDOW_WIDTH,
+            0.01,
+            1000.0,
+        ))
+        .with(MainCamera)
         .build();
 
     let mut dispatcher = dispatcher_builder.with(TestSys, "test", &[]).build();
@@ -112,17 +130,33 @@ fn main() {
         if (timer.as_micros() as f32) >= rfps_barrier {
             gl.clear_screen();
 
+            let (main_camera, camera, transform): (
+                ReadStorage<MainCamera>,
+                ReadStorage<Camera>,
+                ReadStorage<Transform>,
+            ) = world.system_data();
+
+            let (_, camera, transform) = (&main_camera, &camera, &transform).join().next().unwrap();
+
+            let projection_mat = camera.get_projection_matrix();
+            let view_mat = transform.get_view_matrix();
+
             let (material, transform, mesh): (
                 ReadStorage<Material>,
                 ReadStorage<Transform>,
                 ReadStorage<Mesh>,
             ) = world.system_data();
+
             for (material, transform, mesh) in (&material, &transform, &mesh).join() {
                 let pid = material.get_program_id();
                 gl.bind_program(pid);
                 let tloc = gl.get_uniform_location(pid, "trans_mat");
-                // let trans_mat = transform.get_transform_matrix();
+                let ploc = gl.get_uniform_location(pid, "proj_mat");
+                let vloc = gl.get_uniform_location(pid, "view_mat");
+
                 gl.add_uniform_matrix4f(tloc, transform.get_transform_matrix());
+                gl.add_uniform_matrix4f(ploc, projection_mat);
+                gl.add_uniform_matrix4f(vloc, view_mat);
 
                 gl.bind_vao(mesh.get_vao_id());
                 gl.enable_vertex_attrib_arrays(vec![0]); // @todo gather this from mesh or material
