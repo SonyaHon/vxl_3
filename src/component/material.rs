@@ -1,9 +1,10 @@
 use specs::prelude::*;
 
-use crate::{loader::shaders::ShaderManager, vxl_gl::gl};
+use crate::{loader::shaders::ShaderManager, loader::textures::texture::Texture, vxl_gl::gl};
 
 pub struct Material {
     shader_program_id: gl::types::GLuint,
+    texture_id: Option<gl::types::GLuint>,
 }
 impl Component for Material {
     type Storage = DenseVecStorage<Self>;
@@ -15,7 +16,12 @@ impl Material {
 
         Material {
             shader_program_id: program.get_id(),
+            texture_id: None,
         }
+    }
+
+    pub fn add_texture(&mut self, texture: &Texture) {
+        self.texture_id = Some(texture.get_id());
     }
 }
 

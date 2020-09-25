@@ -65,4 +65,8 @@ impl TextureManager {
     pub fn new(textures: std::collections::HashMap<&'static str, texture::Texture>) -> Self {
         TextureManager { textures }
     }
+
+    pub fn get_texture(&self, texture_name: &'static str) -> &texture::Texture {
+        &self.textures.get(texture_name).unwrap()
+    }
 }

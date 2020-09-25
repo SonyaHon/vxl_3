@@ -103,11 +103,14 @@ fn main() {
         ],
     );
 
+    let mut material = Material::default(&shader_manager);
+    material.add_texture(texture_manager.get_texture("test"));
+
     world
         .create_entity()
         .with(mesh)
         .with(Transform::default())
-        .with(Material::default(&shader_manager))
+        .with(material)
         .with(Player)
         .build();
 
