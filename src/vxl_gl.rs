@@ -353,6 +353,12 @@ impl Gl {
             )
         }
     }
+
+    pub fn set_active_texture(&self) {
+        unsafe {
+            self.gl.ActiveTexture(gl::TEXTURE0);
+        }
+    }
 }
 
 impl Gl {

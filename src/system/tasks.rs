@@ -34,16 +34,19 @@ impl<'a> System<'a> for SetRenderTaskSys {
     fn run(&mut self, (material, mesh, transform, mut task): Self::SystemData) {
         for (material, mesh, transform) in (&material, &mesh, &transform).join() {
             let program_id = material.get_program_id();
+            let texture_id = material.get_texture_id();
             let vao_id = mesh.get_vao_id();
             let vertex_count = mesh.get_vertex_count();
             let attrib_arrays = mesh.get_attrib_arrays().to_owned();
             let mat4f_uniforms = vec![("trans_mat", transform.get_transform_matrix())];
+
             task.push_render_task(RenderTask::new(
                 program_id,
                 vao_id,
                 vertex_count,
                 attrib_arrays,
                 mat4f_uniforms,
+                texture_id,
             ));
         }
     }

@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (location = 0) in vec3 Position;
-layout (location = 1) in vec2 UVs
+layout (location = 1) in vec2 UVs;
 
 uniform mat4 trans_mat;
 uniform mat4 proj_mat;

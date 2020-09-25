@@ -6,6 +6,7 @@ pub struct RenderTask {
     vertex_count: i32,
     attrib_arrays: Vec<gl::types::GLuint>,
     mat4f_uniforms: Vec<(&'static str, cgmath::Matrix4<f32>)>,
+    texture_id: Option<gl::types::GLuint>,
 }
 impl RenderTask {
     pub fn new(
@@ -14,6 +15,7 @@ impl RenderTask {
         vertex_count: i32,
         attrib_arrays: Vec<gl::types::GLuint>,
         mat4f_uniforms: Vec<(&'static str, cgmath::Matrix4<f32>)>,
+        texture_id: Option<gl::types::GLuint>,
     ) -> Self {
         RenderTask {
             program_id,
@@ -21,6 +23,7 @@ impl RenderTask {
             vertex_count,
             attrib_arrays,
             mat4f_uniforms,
+            texture_id,
         }
     }
     pub fn get_pid(&self) -> gl::types::GLuint {
@@ -41,6 +44,10 @@ impl RenderTask {
 
     pub fn get_mat4f_unifroms(&self) -> &Vec<(&str, cgmath::Matrix4<f32>)> {
         &self.mat4f_uniforms
+    }
+
+    pub fn get_texture_id(&self) -> Option<gl::types::GLuint> {
+        self.texture_id
     }
 }
 

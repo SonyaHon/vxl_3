@@ -18,6 +18,13 @@ pub fn render_simple<'a>(gl: &'a Gl, task_res: &'a Task) {
         let vloc = gl.get_uniform_location(pid, "view_mat");
         gl.add_uniform_matrix4f(vloc, view_mat);
 
+        let texture_id = render_task.get_texture_id();
+
+        if texture_id.is_some() {
+            gl.set_active_texture();
+            gl.bind_texture(texture_id.unwrap());
+        }
+
         for (name, value) in render_task.get_mat4f_unifroms() {
             gl.add_uniform_matrix4f(gl.get_uniform_location(pid, *name), *value);
         }
@@ -26,6 +33,10 @@ pub fn render_simple<'a>(gl: &'a Gl, task_res: &'a Task) {
         gl.enable_vertex_attrib_arrays(attrib_arrays);
         gl.draw_elements(render_task.get_vertex_count());
         gl.disable_vertex_attrib_arrays(attrib_arrays);
+
+        if texture_id.is_some() {
+            gl.unbind_texture();
+        }
         gl.unbind_vao();
         gl.unbind_program();
     }

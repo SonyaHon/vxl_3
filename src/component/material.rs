@@ -29,4 +29,8 @@ impl Material {
     pub fn get_program_id(&self) -> gl::types::GLuint {
         self.shader_program_id
     }
+
+    pub fn get_texture_id(&self) -> Option<gl::types::GLuint> {
+        self.texture_id
+    }
 }
