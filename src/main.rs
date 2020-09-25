@@ -17,7 +17,7 @@ use glutin::{
     dpi::LogicalSize, dpi::Size, event::Event, event::WindowEvent, event_loop::ControlFlow,
     event_loop::EventLoop, window::WindowBuilder, ContextBuilder,
 };
-use resource::{DeltaTime, Task};
+use resource::{input::UserInput, DeltaTime, Task};
 use specs::prelude::*;
 
 use component::{
@@ -28,6 +28,7 @@ use system::{
     demo::DemoPlayerRotationSys,
     tasks::{SetMainCameraSys, SetRenderTaskSys},
 };
+use utils::key_codes;
 use vxl_gl::gl;
 
 const RFPS: f32 = 120.0;
@@ -140,6 +141,7 @@ fn main() {
 
     let mut rfps = 0;
 
+    world.insert(UserInput::default());
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
         let timer_start = std::time::Instant::now();
@@ -150,11 +152,25 @@ fn main() {
             Event::LoopDestroyed => return,
             Event::WindowEvent { event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                WindowEvent::KeyboardInput { input, .. } => {
+                    let mut input_res = world.write_resource::<UserInput>();
+                    if input.state == glutin::event::ElementState::Pressed {
+                        input_res.add_key(input.scancode);
+                    } else if input.state == glutin::event::ElementState::Released {
+                        input_res.remove_key(input.scancode);
+                    }
+                }
                 _ => (),
             },
-            Event::RedrawRequested(_) => {}
             _ => (),
         };
+
+        println!(
+            "User input:\n W: {}",
+            world
+                .read_resource::<UserInput>()
+                .is_key_pressed(key_codes::KEY_W)
+        );
 
         dispatcher.dispatch(&world);
         world.maintain();

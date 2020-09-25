@@ -1,6 +1,7 @@
 use cgmath::prelude::*;
 use tasks::{MainCameraTask, RenderTask};
 
+pub mod input;
 pub mod tasks;
 
 pub struct DeltaTime {
