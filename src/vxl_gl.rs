@@ -136,6 +136,40 @@ impl Gl {
 
         vbo
     }
+
+    pub fn create_uvs_vbo(&self, uvs: Vec<cgmath::Vector2<f32>>) -> gl::types::GLuint {
+        let mut vbo: gl::types::GLuint = 0;
+
+        let mut nverts: Vec<f32> = Vec::new();
+        uvs.iter().for_each(|uv_vec| {
+            nverts.push(uv_vec.x);
+            nverts.push(uv_vec.y);
+        });
+
+        unsafe { self.gl.GenBuffers(1, &mut vbo) };
+        unsafe {
+            self.gl.BindBuffer(gl::ARRAY_BUFFER, vbo);
+            self.gl.BufferData(
+                gl::ARRAY_BUFFER,
+                (nverts.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr,
+                nverts.as_ptr() as *const gl::types::GLvoid,
+                gl::STATIC_DRAW,
+            );
+            self.gl.EnableVertexAttribArray(1);
+            self.gl.VertexAttribPointer(
+                1,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                (2 * std::mem::size_of::<f32>()) as gl::types::GLint,
+                std::ptr::null(),
+            );
+            self.gl.DisableVertexAttribArray(1);
+            self.gl.BindBuffer(gl::ARRAY_BUFFER, 0);
+        }
+
+        vbo
+    }
 }
 
 /// Shaders

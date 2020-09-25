@@ -82,7 +82,7 @@ fn main() {
 
     let dispatcher_builder = specs::DispatcherBuilder::new();
 
-    let mesh = Mesh::from_data(
+    let mut mesh = Mesh::from_data(
         &gl,
         vec![
             cgmath::vec3(-0.5, 0.5, 0.0),
@@ -93,6 +93,15 @@ fn main() {
         vec![0, 2, 1, 1, 2, 3],
     );
 
+    mesh.add_uvs(
+        &gl,
+        vec![
+            cgmath::vec2(0.0, 0.0),
+            cgmath::vec2(1.0, 0.0),
+            cgmath::vec2(0.0, 1.0),
+            cgmath::vec2(1.0, 1.0),
+        ],
+    );
 
     world
         .create_entity()
